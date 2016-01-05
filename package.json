@@ -1,0 +1,51 @@
+{
+	"name": "iris-service-messagehub",
+	"version": "1.0.0",
+	"description": "couchbase replication controller service",
+	"main": "index.js",
+	"scripts": {
+		"test": "mocha",
+		"install": "gulp --gulpfile build.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/sdk-group/iris-service-messagehub.git"
+	},
+	"keywords": [
+		"iris",
+		"couchbase",
+		"xdcr"
+	],
+	"author": "...",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/sdk-group/iris-service-messagehub/issues"
+	},
+	"homepage": "https://github.com/sdk-group/iris-service-messagehub#readme",
+	"devDependencies": {
+		"Couchbird": "git+https://github.com/YuuKohaku/Couchbird.git",
+		"cbird-rdf": "git+https://github.com/YuuKohaku/cbird-rdf.git",
+		"chai": "^3.3.0",
+		"gulp": "^3.9.0",
+		"gulp-babel": "^5.1.0",
+		"gulp-changed": "^1.2.1",
+		"gulp-concat": "^2.5.2",
+		"gulp-develop-server": "^0.4.3",
+		"gulp-livereload": "^3.8.0",
+		"gulp-mocha": "^2.1.3",
+		"gulp-nodemon": "^2.0.3",
+		"gulp-plumber": "^1.0.1",
+		"gulp-sourcemaps": "^1.5.2",
+		"gulp-watch": "^4.2.4"
+	},
+	"dependencies": {
+		"cookie": "^0.2.3",
+		"finalhandler": "^0.4.1",
+		"router": "^1.1.3",
+		"socket.io": "^1.3.7",
+		"xmlrpc": "github:olegabr/node-xmlrpc",
+		"iris-auth-util": "git+https://github.com/sdk-group/iris-auth-util.git",
+		"bluebird": "^3.1.1",
+		"lodash": "^3.10.1"
+	}
+}
