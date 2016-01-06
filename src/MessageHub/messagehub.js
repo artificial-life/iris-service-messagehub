@@ -2,9 +2,12 @@
 
 let ConnectorHolder = require("./connector/holder");
 let auth = require('iris-auth-util');
+let emitter = require("global-queue");
 
 class MessageHub {
-	constructor() {}
+	constructor() {
+		this.emitter = emitter;
+	}
 	init(options) {
 		this.connectors = new ConnectorHolder(options.default_options);
 		this.connectors.addMulti(options.connectors);
