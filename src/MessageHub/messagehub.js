@@ -26,6 +26,10 @@ class MessageHub {
 				})
 				.catch((err) => {
 					console.warn('AUTH failed for:', user, pass, origin);
+					console.error(err);
+					if ('undefined' !== typeof err.stack) {
+						console.error(err.stack);
+					}
 					return {
 						value: false,
 						reason: "Internal error."
@@ -52,6 +56,10 @@ class MessageHub {
 				})
 				.catch((err) => {
 					console.warn('AUTH check failed for:', token);
+					console.error(err);
+					if ('undefined' !== typeof err.stack) {
+						console.error(err.stack);
+					}
 					return {
 						value: false,
 						reason: "Internal error."
