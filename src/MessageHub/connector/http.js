@@ -10,122 +10,122 @@ let AbstractConnector = require("./abstract");
 const default_routes = {};
 
 class HttpConnector extends AbstractConnector {
-  constructor() {
-    super();
-  }
-  create(options) {
-    this.port = options.port;
-    this.routes = options.routes || default_routes;
+	constructor() {
+		super();
+	}
+	create(options) {
+		this.port = options.port;
+		this.routes = options.routes || default_routes;
 
-    this.io = http.createServer();
+		this.server = http.createServer();
 
-    this.router = Router();
+		this.router = Router();
 
-    _.forEach(this.routes, (route, method) => {
-      _.forEach(route, (module, path) => {
-        try {
-          let Handler = require(module);
-          let handler = new Handler();
-          handler.create({
-            httpServer: this.io,
-            connector: this
-          });
-          let httpHandler = handler.getHttpHandler();
-          this.router[method](path, httpHandler);
-        } catch (ex) {
-          console.error(ex);
-          console.error(ex.stack);
-        }
-      });
-    });
+		_.forEach(this.routes, (route, method) => {
+			_.forEach(route, (module, path) => {
+				try {
+					let Handler = require(module);
+					let handler = new Handler();
+					handler.create({
+						httpServer: this.server,
+						connector: this
+					});
+					let httpHandler = handler.getHttpHandler();
+					this.router[method](path, httpHandler);
+				} catch(ex) {
+					console.error(ex);
+					console.error(ex.stack);
+				}
+			});
+		});
 
-    this.on_message((data) => {
-      console.log("HTTP received: ", data);
-      return Promise.resolve({
-        Default: "response"
-      });
-    });
-    this.on_connection((socket) => {
-      console.log("CONNECTION TO HTTP");
-      return new Promise((resolve, reject) => {
-        socket.on()
-        return resolve({
-          value: true,
-          reason: 'Too much noise'
-        });
-      });
-    });
-    this.on_disconnect(() => {
-      console.log("CLIENT DISCONNECTED");
-      return Promise.resolve(true);
-    });
-    return this;
-  }
+		this.on_message((data) => {
+			console.log("HTTP received: ", data);
+			return Promise.resolve({
+				Default: "response"
+			});
+		});
+		this.on_connection((socket) => {
+			console.log("CONNECTION TO HTTP");
+			return new Promise((resolve, reject) => {
+				socket.on()
+				return resolve({
+					value: true,
+					reason: 'Too much noise'
+				});
+			});
+		});
+		this.on_disconnect(() => {
+			console.log("CLIENT DISCONNECTED");
+			return Promise.resolve(true);
+		});
+		return this;
+	}
 
-  listen() {
-    this.io.on('request', (req, res) => {
-      this.router(req, res, finalhandler(req, res));
-    });
-    this.io.on('error', (err) => {
-      console.log('HTTP error:', err);
-    });
-    this.io.listen(this.port);
-    console.log('HTTP: listen to port', this.port);
-  }
+	listen() {
+		this.server.on('request', (req, res) => {
+			this.router(req, res, finalhandler(req, res));
+		});
+		this.server.on('error', (err) => {
+			console.log('HTTP error:', err);
+		});
+		this.server.listen(this.port);
+		console.log('HTTP: listen to port', this.port);
+	}
 
-  close() {
-    // TODO: вернуть промис и там его дождаться
-    this.io.close();
-  }
+	close() {
+		// TODO: вернуть промис и там его дождаться
+		this.server.close();
+	}
 
-  broadcast(data) {
-    throw new Error("Not supported method: broadcast.");
-  }
+	broadcast(data) {
+		throw new Error("Not supported method: broadcast.");
+	}
 
-  on_message(resolver) {
-    if (_.isFunction(resolver))
-      this._on_message = resolver;
-  }
+	on_message(resolver) {
+		if(_.isFunction(resolver))
+			this._on_message = resolver;
+	}
 
-  /**
-   * @param data Сообщение формата:
-   * {
-   *	destination: event_name,
-   *  data: method_params,
-   *  token: token_string
-   * }
-   * @return {Promise} Обещание обработки сообщения
-   */
-  sendMessage(data) {
-    return this._on_message(data);
-  }
+	/**
+	 * @param data Сообщение формата:
+	 * {
+	 *	destination: event_name,
+	 *  data: method_params,
+	 *  token: token_string
+	 * }
+	 * @return {Promise} Обещание обработки сообщения
+	 */
+	sendMessage(data) {
+		return this._on_message(data);
+	}
 
-  /**
-   * @param data Сообщение формата: {
-   *		username: user,
-   *		password_hash: pass,
-   *		origin: origin
-   *	}
-   * @return {Promise} Обещание обработки сообщения
-   */
-  sendLoginMessage(data) {
-    return this._on_login(data);
-  }
+	/**
+	 * @param data Сообщение формата: {
+	 *		username: user,
+	 *		password_hash: pass,
+	 *		origin: origin
+	 *	}
+	 * @return {Promise} Обещание обработки сообщения
+	 */
+	sendLoginMessage(data) {
+		return this._on_login(data);
+	}
 
-  on_login(callback) {
-    if (_.isFunction(callback))
-      this._on_login = callback;
-  }
+	on_login(callback) {
+		if(_.isFunction(callback))
+			this._on_login = callback;
+	}
 
-  on_connection(callback) {
-    if (_.isFunction(callback))
-      this._on_connection = callback;
-  }
+	on_connection(callback) {
+		if(_.isFunction(callback))
+			this._on_connection = callback;
+	}
 
-  on_disconnect(callback) {
-    if (_.isFunction(callback))
-      this._on_disconnect = callback;
-  }
+	on_disconnect(callback) {
+		if(_.isFunction(callback))
+			this._on_disconnect = callback;
+	}
 
 }
 
