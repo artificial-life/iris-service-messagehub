@@ -66,7 +66,9 @@ class WebsocketConnector extends AbstractConnector {
 					.then((valid) => {
 						if(valid.value === true) {
 							console.log("AUTHORIZED WS", valid);
-							socket.token = valid.value ? valid.token : undefined;
+							socket.token = valid.token;
+							socket.user_data = valid.data;
+
 							socket.emit('message', {
 								data: "Authentication success.",
 								token: valid.token,
@@ -82,6 +84,7 @@ class WebsocketConnector extends AbstractConnector {
 								}
 								data.destination = uri;
 								data.token = socket.token;
+								data.session = socket.user_data;
 								this._on_message(data)
 									.then((response) => {
 										socket.emit('message', response);
