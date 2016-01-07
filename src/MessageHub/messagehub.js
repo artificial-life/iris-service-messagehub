@@ -9,6 +9,7 @@ class MessageHub {
 		this.emitter = emitter;
 	}
 	init(options) {
+		console.log("INIT MH");
 		this.connectors = new ConnectorHolder(options.default_options);
 		this.connectors.addMulti(options.connectors);
 		this.connectors.listen();
@@ -22,12 +23,12 @@ class MessageHub {
 			return auth.authorize({
 					user: user,
 					password_hash: pass,
-					address: origin
+					origin: origin
 				})
 				.catch((err) => {
 					console.warn('AUTH failed for:', user, pass, origin);
 					console.error(err);
-					if ('undefined' !== typeof err.stack) {
+					if('undefined' !== typeof err.stack) {
 						console.error(err.stack);
 					}
 					return {
@@ -57,7 +58,7 @@ class MessageHub {
 				.catch((err) => {
 					console.warn('AUTH check failed for:', token);
 					console.error(err);
-					if ('undefined' !== typeof err.stack) {
+					if('undefined' !== typeof err.stack) {
 						console.error(err.stack);
 					}
 					return {

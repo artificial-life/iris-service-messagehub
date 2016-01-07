@@ -4,94 +4,129 @@ let Server = require("socket.io");
 let AbstractConnector = require("./abstract");
 
 class WebsocketConnector extends AbstractConnector {
-  constructor() {
-    super();
-  }
-  create(options) {
-    this.port = options.port;
-    this.routes = options.routes || ["/"];
-    this.io = new Server();
-    this.on_message((data) => {
-      console.log("WS received: ", data);
-      return Promise.resolve({
-        Default: "response"
-      });
-    });
-    this.on_connection((socket) => {
-      console.log("CONNECTION TO WS");
-      return new Promise((resolve, reject) => {
-        socket.on()
-        return resolve({
-          value: true,
-          reason: 'Too much noise'
-        });
-      });
-    });
-    this.on_disconnect(() => {
-      console.log("CLIENT DISCONNECTED");
-      return Promise.resolve(true);
-    });
-    return this;
-  }
+	constructor() {
+		super();
+	}
+	create(options) {
+		this.port = options.port;
+		this.auth_timeout = options.auth_timeout || 5000;
+		console.log("WS ON PORT", options.port);
+		this.routes = options.routes || ["/"];
+		this.io = new Server();
+		this.on_message((data) => {
+			console.log("WS received: ", data);
+			return Promise.resolve({
+				Default: "response"
+			});
+		});
+		this.on_connection((socket) => {
+			console.log("CONNECTION TO WS");
+			return new Promise((resolve, reject) => {
+				console.log("LOGIN", socket.token);
+				if(socket.token) {
+					return resolve({
+						value: true,
+						reason: "Welcome"
+					});
+				}
+				socket.on('login', ({
+					login: user,
+					password: password,
+					origin: origin,
+					request_id: req_id
+				}) => {
+					console.log("ONLOGIN", user, password, origin);
+					let p = this._on_login({
+							username: user,
+							password_hash: password,
+							origin: origin
+						})
+						.then((res) => {
+							let data = res;
+							data.request_id = req_id;
+							return data;
+						});
 
-  listen() {
-    this.io.listen(this.port);
-    _.map(this.routes, (uri) => {
-      this.io.of(uri).on('connection', (socket) => {
-        this._on_connection(socket)
-          .then((valid) => {
-            if (valid.value === true) {
-              socket.on('message', (data) => {
-                if (data.uri == 'ws://subscribe') {
-                  let rooms = _.isArray(data.data.room) ? data.data.room : [data.data.room];
-                  _.map(rooms, (room) => {
-                    socket.join(room);
-                    socket.emit('room-message', `Now joined ${room}`)
-                  });
-                }
-                data.destination = uri;
-                this._on_message(data)
-                  .then((response) => {
-                    socket.emit('message', response);
-                  });
-              });
+					resolve(p);
+				});
+			})
+		});
+		this.on_disconnect(() => {
+			console.log("CLIENT DISCONNECTED");
+			return Promise.resolve(true);
+		});
+		return this;
+	}
 
-              socket.on('disconnect', this._on_disconnect);
-            } else {
-              socket.disconnect(valid.reason);
-            }
-          })
-          .catch((err) => {
-            socket.disconnect('Auth error.');
-          });
-      });
-    });
-  }
+	listen() {
+		this.io.listen(this.port);
+		_.map(this.routes, (uri) => {
+			this.io.of(uri).on('connection', (socket) => {
+				this._on_connection(socket)
+					.then((valid) => {
+						if(valid.value === true) {
+							console.log("AUTHORIZED WS", valid);
+							socket.token = valid.value ? valid.token : undefined;
+							socket.emit('message', {
+								data: "Authentication success.",
+								token: valid.token,
+								request_id: valid.request_id
+							});
+							socket.on('message', (data) => {
+								if(data.uri == 'ws://subscribe') {
+									let rooms = _.isArray(data.data.room) ? data.data.room : [data.data.room];
+									_.map(rooms, (room) => {
+										socket.join(room);
+										socket.emit('room-message', `Now joined ${room}`)
+									});
+								}
+								data.destination = uri;
+								data.token = socket.token;
+								this._on_message(data)
+									.then((response) => {
+										socket.emit('message', response);
+									});
+							});
 
-  close() {
-    this.io.close();
-  }
+							socket.on('disconnect', this._on_disconnect);
+						} else {
+							socket.disconnect(valid.reason);
+						}
+					})
+					.catch((err) => {
+						socket.disconnect('Auth error.');
+					});
+			});
+		});
+	}
 
-  broadcast(data) {
-    this.io.emit(data.event_name, data.event_data);
-  }
+	close() {
+		this.io.close();
+	}
 
-  on_message(resolver) {
-    if (_.isFunction(resolver))
-      this._on_message = resolver;
-  }
+	broadcast(data) {
+		this.io.emit(data.event_name, data.event_data);
+	}
 
-  on_login(callback) {}
+	on_message(resolver) {
+		if(_.isFunction(resolver))
+			this._on_message = resolver;
+	}
 
-  on_connection(callback) {
-    if (_.isFunction(callback))
-      this._on_connection = callback;
-  }
+	on_login(callback) {
+		if(_.isFunction(callback))
+			this._on_login = callback;
+	}
 
-  on_disconnect(callback) {
-    if (_.isFunction(callback))
-      this._on_disconnect = callback;
-  }
+	on_connection(callback) {
+		if(_.isFunction(callback))
+			this._on_connection = callback;
+	}
+
+	on_disconnect(callback) {
+		if(_.isFunction(callback))
+			this._on_disconnect = callback;
+	}
 
 }
 
