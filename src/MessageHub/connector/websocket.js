@@ -41,7 +41,7 @@ class WebsocketConnector extends AbstractConnector {
           request_id: req_id
         }) => {
           console.log("ONLOGIN", user, password, origin);
-          let p = this._on_login({
+          let p = this.loginHandler({
               username: user,
               password_hash: password,
               origin: origin
@@ -67,7 +67,7 @@ class WebsocketConnector extends AbstractConnector {
     this.io.listen(this.port);
     _.map(this.routes, (uri) => {
       this.io.of(uri).on('connection', (socket) => {
-        this._on_connection(socket)
+        this.connectionHandler(socket)
           .then((valid) => {
             if (valid.value === true) {
               console.log("AUTHORIZED WS", valid);
@@ -94,13 +94,13 @@ class WebsocketConnector extends AbstractConnector {
                 data.token = socket.token;
                 data.session = socket.user_data;
 
-                this._on_message(data)
+                this.messageHandler(data)
                   .then((response) => {
                     socket.emit('message', response);
                   });
               });
 
-              socket.on('disconnect', this._on_disconnect);
+              socket.on('disconnect', this.diconnectHandler);
             } else {
               socket.disconnect(valid.reason);
             }
@@ -124,22 +124,22 @@ class WebsocketConnector extends AbstractConnector {
 
   on_message(resolver) {
     if (_.isFunction(resolver))
-      this._on_message = resolver;
+      this.messageHandler = resolver;
   }
 
   on_login(callback) {
     if (_.isFunction(callback))
-      this._on_login = callback;
+      this.loginHandler = callback;
   }
 
   on_connection(callback) {
     if (_.isFunction(callback))
-      this._on_connection = callback;
+      this.connectionHandler = callback;
   }
 
   on_disconnect(callback) {
     if (_.isFunction(callback))
-      this._on_disconnect = callback;
+      this.diconnectHandler = callback;
   }
 
 }
