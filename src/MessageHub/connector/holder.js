@@ -29,7 +29,6 @@ class ServerHolder {
 					port: server_port,
 					connector: conn_data
 				};
-				console.log("INIT CONN", server_key, server_port);
 				return this.initConnectors(connector);
 			});
 		});
@@ -55,10 +54,6 @@ class ServerHolder {
 		this.handlers[server_key + ":" + server_port] = app;
 	}
 
-	every(callback) {
-		return _.map(this.servers, (conn) => callback(conn));
-	}
-
 	server(key) {
 		return this.servers[key] || false;
 	}
@@ -71,7 +66,9 @@ class ServerHolder {
 	}
 
 	close() {
-		return this.every((conn) => conn.close());
+		return _.map(this.servers, (server, key) => {
+			this.servers[key].close();
+		});
 	}
 
 	on_message(resolver) {

@@ -44,7 +44,7 @@
     "body-parser": "^1.14.2",
     "cookie": "^0.2.3",
     "express": "^4.13.3",
-    "express.io": "^1.1.13",
+    "express.oi": "0.0.20",
     "finalhandler": "^0.4.1",
     "global-queue": "git+https://github.com/artificial-life/global-queue",
     "iris-auth-util": "git+https://github.com/sdk-group/iris-auth-util.git",

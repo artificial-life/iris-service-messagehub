@@ -11,46 +11,34 @@ class HttpRest extends AbstractConnector {
 	}
 
 	create(options) {
-		this.on_disconnect(() => {
-			console.log("CLIENT DISCONNECTED");
-			return Promise.resolve(true);
-		});
 		router.use(bodyParse.json());
 		router.use(bodyParse.urlencoded({
 			extended: true
 		}));
-		router.post("/login", function(req, res, next) {
-			let user = req.body.user;
-			let pass = req.body.password;
-			let origin = req.body.origin || "unknown";
-			auth.authorize({
-					user: user,
-					password_hash: pass,
-					origin: origin
-				})
-				.then((result) => {
-					res.send(result);
-				})
-				.catch((err) => {
-					res.send({
-						value: false,
-						reason: "Internal error."
+		router.route("/login")
+			.post(function(req, res, next) {
+				let user = req.body.user;
+				let pass = req.body.password;
+				let origin = req.body.origin || "unknown";
+				auth.authorize({
+						user: user,
+						password_hash: pass,
+						origin: origin
+					})
+					.then((result) => {
+						res.send(result.token);
+						next();
+					})
+					.catch((err) => {
+						res.send({
+							value: false,
+							reason: "Internal error."
+						});
+						next();
 					});
-				});
-		});
+			});
 		return router;
 	}
-
-	on_connection(callback) {
-		if(_.isFunction(callback))
-			this.connectionHandler = callback;
-	}
-
-	on_disconnect(callback) {
-		if(_.isFunction(callback))
-			this.diconnectHandler = callback;
-	}
-
 }
 
 module.exports = HttpRest;

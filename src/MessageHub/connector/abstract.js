@@ -6,27 +6,12 @@ class AbstractConnector {
 	set name(pre) {
 		this.conn_name = pre || '';
 	}
+
 	create(data) {
 		throw new Error("AbstractConnector method.");
 	}
 
-	listen(data) {
-		throw new Error("AbstractConnector method.");
-	}
-
-	close() {
-		throw new Error("AbstractConnector method.");
-	}
-
-	broadcast() {
-		throw new Error("AbstractConnector method.");
-	}
-
 	on_message(callback) {
-		throw new Error("AbstractConnector method.");
-	}
-
-	on_login(callback) {
 		throw new Error("AbstractConnector method.");
 	}
 
