@@ -3,6 +3,9 @@
 class AbstractConnector {
 	constructor() {}
 
+	set name(pre) {
+		this.conn_name = pre || '';
+	}
 	create(data) {
 		throw new Error("AbstractConnector method.");
 	}
