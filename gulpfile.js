@@ -64,6 +64,23 @@ gulp.task('serve', ['start-serve'], function() {
   gulp.watch(["src/**/*.js", "tests/**/*.js"], ['es6']);
 });
 
+gulp.task('standalone', ['start-standalone'], function() {
+  gulp.watch(["src/**/*.js", "tests/**/*.js"], ['es6']);
+});
+
+gulp.task('start-standalone', function() {
+  demon = nodemon({
+    script: 'build/standalone.js',
+    watch: ['build/'],
+    execMap: {
+      "js": "node  --harmony --harmony_proxies"
+    },
+    env: {
+      'NODE_ENV': 'development'
+    }
+  });
+});
+
 gulp.task('start-test', function() {
   demon = nodemon({
     script: 'build/run.js',

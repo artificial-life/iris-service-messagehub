@@ -5,40 +5,49 @@ let router = require("express").Router();
 let bodyParse = require("body-parser");
 let auth = require('iris-auth-util');
 
-class HttpRest extends AbstractConnector {
-	constructor() {
-		super();
-	}
+var allowCrossDomain = function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+}
 
-	create(options) {
-		router.use(bodyParse.json());
-		router.use(bodyParse.urlencoded({
-			extended: true
-		}));
-		router.route("/login")
-			.post(function(req, res, next) {
-				let user = req.body.user;
-				let pass = req.body.password;
-				let origin = req.body.origin || "unknown";
-				auth.authorize({
-						user: user,
-						password_hash: pass,
-						origin: origin
-					})
-					.then((result) => {
-						res.send(result.token);
-						next();
-					})
-					.catch((err) => {
-						res.send({
-							value: false,
-							reason: "Internal error."
-						});
-						next();
-					});
-			});
-		return router;
-	}
+class HttpRest extends AbstractConnector {
+  constructor() {
+    super();
+  }
+
+  create(options) {
+    router.use(bodyParse.json());
+    router.use(bodyParse.urlencoded({
+      extended: true
+    }));
+    router.use(allowCrossDomain);
+    router.route("/login")
+      .post(function(req, res, next) {
+        let user = req.body.user;
+        let pass = req.body.password;
+        let origin = req.body.origin || "unknown";
+
+        auth.authorize({
+            user: user,
+            password_hash: pass,
+            origin: origin
+          })
+          .then((success_result) => {
+            res.send(success_result);
+            next();
+          })
+          .catch((err) => {
+            res.send({
+              value: false,
+              reason: "Internal error."
+            });
+            next();
+          });
+      });
+    return router;
+  }
 }
 
 module.exports = HttpRest;
