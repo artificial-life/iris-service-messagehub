@@ -78,7 +78,9 @@ class ServerHolder {
   }
 
   on_message(resolver) {
-    this.every((conn) => conn.on_message((data) => resolver(data)));
+    _.forEach(this.connectors, (by_server) => {
+      _.forEach(by_server, (conn) => conn.on_message(resolver))
+    });
   }
 }
 

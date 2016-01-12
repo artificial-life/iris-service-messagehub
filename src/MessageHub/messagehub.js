@@ -4,72 +4,25 @@ let ServerHolder = require("./connector/holder");
 let auth = require('iris-auth-util');
 let emitter = require("global-queue");
 
+let performTask = function(destination, data) {
+  return emitter.addTask(destination, data).then((result) => {
+      state: true,
+      value: result
+    })
+    .catch((err) => {
+      state: false,
+      reason: "Internal error."
+    });
+};
+
 class MessageHub {
-	constructor() {
-		this.emitter = emitter;
-	}
-	init(options) {
-		console.log("INIT MH");
-		this.connectors = new ServerHolder(options.default_options);
-		this.connectors.init(options.connectors);
-		this.connectors.listen();
+  constructor() {}
+  init(options) {
+    this.connectors.init(options.connectors);
+    this.connectors.listen();
 
-		// this.connectors.on_login(({
-		// 	username: user,
-		// 	password_hash: pass,
-		// 	origin: origin
-		// }) => {
-		// 	console.log("USERPASS", user, pass, origin);
-		// 	//@TODO: check auth here: userpass
-		// 	return auth.authorize({
-		// 			user: user,
-		// 			password_hash: pass,
-		// 			origin: origin
-		// 		})
-		// 		.catch((err) => {
-		// 			console.warn('AUTH failed for:', user, pass, origin);
-		// 			console.error(err);
-		// 			if('undefined' !== typeof err.stack) {
-		// 				console.error(err.stack);
-		// 			}
-		// 			return {
-		// 				value: false,
-		// 				reason: "Internal error."
-		// 			}
-		// 		});
-		// });
-
-		// this.connectors.on_message((data) => {
-		// 	console.log("DATA", data);
-		// 	//check auth here: data.token
-		// 	//then route
-		// 	let token = data.token;
-		// 	return auth.check({
-		// 			token: token
-		// 		})
-		// 		.then((result) => {
-		// 			if(result.value == true) {
-		// 				//result.data is user session
-		// 				//@TODO: check permissions here
-		// 				return this.emitter.addTask(data.destination, data.data);
-		// 			} else {
-		// 				console.warn('AUTH check failed for token:', token);
-		// 				return result;
-		// 			}
-		// 		})
-		// 		.catch((err) => {
-		// 			console.warn('AUTH check failed for:', token);
-		// 			console.error(err);
-		// 			if('undefined' !== typeof err.stack) {
-		// 				console.error(err.stack);
-		// 			}
-		// 			return {
-		// 				value: false,
-		// 				reason: "Internal error."
-		// 			}
-		// 		});
-		// });
-	}
+    this.connectors.on_message(performTask);
+  }
 }
 
 module.exports = MessageHub;
