@@ -19,6 +19,7 @@ class ServerHolder {
     this.default_options = default_options;
     this.handlers = {};
     this.servers = {};
+    this.connectors = {};
   }
 
   init(conn_map) {
@@ -48,9 +49,13 @@ class ServerHolder {
       let conn = new ConnModel();
       conn.name = conn_name;
       conn.create(app, connector.options);
+
+      this.connectors[server_key + ':' + server_port] = this.connectors[server_key + ':' + server_port] || {};
+      this.connectors[server_key + ':' + server_port][conn_name] = conn;
     });
 
     this.handlers[server_key + ":" + server_port] = app;
+    console.log(this.connectors);
   }
 
   server(key) {
@@ -61,13 +66,15 @@ class ServerHolder {
     return _.map(this.handlers, (app, key) => {
       let [protocol, port] = key.split(":");
       this.servers[key] = this.handlers[key].listen(port);
+
+      _.map(this.connectors[key], (conn) => {
+        if (conn.listen) conn.listen(this.servers[key])
+      })
     });
   }
 
   close() {
-    return _.map(this.servers, (server, key) => {
-      this.servers[key].close();
-    });
+    return _.map(this.servers, (server, key) => this.server(key).close());
   }
 
   on_message(resolver) {

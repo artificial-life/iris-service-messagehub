@@ -1,23 +1,34 @@
 'use strict'
 
+let crossroads = require('crossroads');
+
 let Server = require("socket.io");
 let AbstractConnector = require("./abstract");
 let auth = require('iris-auth-util');
 
 const DEFAULT_WS_TIMEOUT = 5000;
 
-
-
 class WebsocketConnector extends AbstractConnector {
   constructor() {
     super();
   }
-
   create(app, options) {
-    this.io = require('socket.io')(app);
+    this.router = crossroads.create();
+    this.router.addRoute('/auth', function(socket, data) {
+      socket.emit('message', {
+        hello: 'socket'
+      })
+    });
+  }
+  listen(server) {
+    this.io = require('socket.io')(server);
 
-    io.on('connection', function(socket) {
+    this.io.on('connection', (socket) => {
       console.log('Connected!');
+      socket.on('message', (data) => {
+        console.log(data);
+        this.router.parse(data.uri, [socket, data]);
+      });
     });
   }
 }
