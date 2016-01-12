@@ -17,7 +17,7 @@ class HttpRest extends AbstractConnector {
     super();
   }
 
-  create(options) {
+  create(app, options) {
     router.use(bodyParse.json());
     router.use(bodyParse.urlencoded({
       extended: true
@@ -46,7 +46,8 @@ class HttpRest extends AbstractConnector {
             next();
           });
       });
-    return router;
+
+    app.use(router);
   }
 }
 
