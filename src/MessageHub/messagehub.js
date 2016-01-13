@@ -18,6 +18,7 @@ let performTask = function(destination, data) {
 class MessageHub {
   constructor() {}
   init(options) {
+    this.connectors = new ServerHolder(options.default_options);
     this.connectors.init(options.connectors);
     this.connectors.listen();
 
