@@ -50,7 +50,7 @@ class HttpRest extends AbstractConnector {
 
     app.use(router);
   }
-  on_message() {
+  on_message(handler) {
     if (handler instanceof Function) {
       this.messageHandler = handler;
     }
