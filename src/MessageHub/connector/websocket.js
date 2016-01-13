@@ -17,7 +17,7 @@ class WebsocketConnector extends AbstractConnector {
 
     this.router.addRoute('/auth', (socket, data) => {
       auth.check(data).then((result) => {
-          socket.token = token;
+          socket.token = data.token;
           return result;
         })
         .catch((err) => ({
