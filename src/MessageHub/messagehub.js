@@ -5,14 +5,14 @@ let auth = require('iris-auth-util');
 let emitter = require("global-queue");
 
 let performTask = function(destination, data) {
-  return emitter.addTask(destination, data).then((result) => {
+  return emitter.addTask(destination, data).then((result) => ({
       state: true,
       value: result
-    })
-    .catch((err) => {
+    }))
+    .catch((err) => ({
       state: false,
       reason: "Internal error."
-    });
+    }));
 };
 
 class MessageHub {

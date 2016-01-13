@@ -20,10 +20,10 @@ class WebsocketConnector extends AbstractConnector {
           socket.token = token;
           return result;
         })
-        .catch((err) => {
+        .catch((err) => ({
           value: false,
           reason: "Internal error."
-        })
+        }))
         .then(result => {
           return result.value ? socket.authorized.resolve(result) : socket.authorized.reject(result.reason);
         });
@@ -69,9 +69,12 @@ class WebsocketConnector extends AbstractConnector {
         reject: reject
       };
 
-      authorized.timeout(DEFAULT_WS_TIMEOUT).then((result) => {
-        socket.emit('auth-accepted', result)
-      }).catch((result) => socket.disconnect(result))
+      authorized
+        .timeout(DEFAULT_WS_TIMEOUT)
+        .then((result) => {
+          socket.emit('auth-accepted', result)
+        })
+        .catch((result) => socket.disconnect(result))
 
       socket.on('message', (data) => {
         this.router.parse(data.uri, [socket, data]);
