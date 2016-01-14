@@ -1,144 +1,93 @@
 'use strict'
 
+let crossroads = require('crossroads');
+
 let Server = require("socket.io");
 let AbstractConnector = require("./abstract");
+let auth = require('iris-auth-util');
 
 const DEFAULT_WS_TIMEOUT = 5000;
 
 class WebsocketConnector extends AbstractConnector {
-	constructor() {
-		super();
-	}
-	create(options) {
-		this.port = options.port;
-		this.auth_timeout = options.auth_timeout || DEFAULT_WS_TIMEOUT;
-		console.log("WS ON PORT", options.port);
+  constructor() {
+    super();
+  }
+  create(app, options) {
+    this.router = crossroads.create();
 
-		this.io = new Server();
+    this.router.addRoute('/auth', (socket, data) => {
+      auth.check(data).then((result) => {
+          socket.token = data.token;
+          return result;
+        })
+        .catch((err) => ({
+          value: false,
+          reason: "Internal error."
+        }))
+        .then(result => {
+          return result.value ? socket.authorized.resolve(result) : socket.authorized.reject(result.reason);
+        });
+    });
 
-		this.on_message((data) => {
-			console.log("WS received: ", data);
-			return Promise.resolve({
-				Default: "response"
-			});
-		});
+    this.router.addRoute('/{module}/{action}', (socket, data, module, action) => {
+      let request_id = data.request_id;
 
-		this.on_connection((socket) => {
-			console.log("CONNECTION TO WS");
-			return new Promise((resolve, reject) => {
-				console.log("LOGIN", socket.token);
-				if(socket.token) {
-					return resolve({
-						value: true,
-						reason: "Welcome"
-					});
-				}
-				socket.on('login', ({
-					login: user,
-					password: password,
-					origin: origin,
-					request_id: req_id
-				}) => {
-					console.log("ONLOGIN", user, password, origin);
-					let p = this.loginHandler({
-							username: user,
-							password_hash: password,
-							origin: origin
-						})
-						.then((res) => {
-							let data = res;
-							data.request_id = req_id;
-							return data;
-						});
+      if (!socket.authorized.promise.isFulfilled()) {
+        let denied = {
+          state: false,
+          reason: 'Auth required',
+          request_id: request_id
+        };
 
-					resolve(p);
-				});
-			})
-		});
-		this.on_disconnect(() => {
-			console.log("CLIENT DISCONNECTED");
-			return Promise.resolve(true);
-		});
-		return this;
-	}
+        socket.emit('message', denied);
+        return;
+      }
 
-	listen() {
-		this.io.listen(this.port);
-		this.io.on('connection', (socket) => {
-			this.connectionHandler(socket)
-				.then((valid) => {
-					if(valid.value === true) {
-						console.log("AUTHORIZED WS", valid);
-						socket.token = valid.token;
-						socket.user_data = valid.data;
+      data._action = action;
 
-						socket.emit('message', {
-							data: "Authentication success.",
-							token: valid.token,
-							request_id: valid.request_id
-						});
+      this.messageHandler(module, data)
+        .then((result) => {
+          result.request_id = request_id;
+          socket.emit('message', result);
+        });
+    });
+  }
+  listen(server) {
+    this.io = require('socket.io')(server);
 
-						socket.on('message', (data) => {
+    this.io.on('connection', (socket) => {
+      console.log('Connected!');
+      let resolve, reject;
+      let authorized = new Promise((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
 
-							if(data.uri == 'ws://subscribe') {
-								let rooms = _.isArray(data.data.room) ? data.data.room : [data.data.room];
-								_.map(rooms, (room) => {
-									socket.join(room);
-									socket.emit('room-message', `Now joined ${room}`)
-								});
-							}
+      socket.authorized = {
+        promise: authorized,
+        resolve: resolve,
+        reject: reject
+      };
 
-							data.destination = uri;
-							data.token = socket.token;
-							data.session = socket.user_data;
+      authorized
+        .timeout(DEFAULT_WS_TIMEOUT)
+        .then((result) => {
+          socket.emit('auth-accepted', result)
+        })
+        .catch((result) => socket.disconnect(result))
 
-							this.messageHandler(data)
-								.then((response) => {
-									socket.emit('message', response);
-								});
-						});
+      socket.on('message', (data) => {
+        this.router.parse(data.uri, [socket, data]);
+      });
 
-						socket.on('disconnect', this.diconnectHandler);
-					} else {
-						socket.disconnect(valid.reason);
-					}
-				})
-				.catch((err) => {
-					socket.disconnect('Auth error.');
-				});
-		});
-	}
+    });
+  }
 
-
-
-	close() {
-		this.io.close();
-	}
-
-	broadcast(data) {
-		this.io.emit(data.event_name, data.event_data);
-	}
-
-	on_message(resolver) {
-		if(_.isFunction(resolver))
-			this.messageHandler = resolver;
-	}
-
-	on_login(callback) {
-		if(_.isFunction(callback))
-			this.loginHandler = callback;
-	}
-
-	on_connection(callback) {
-		if(_.isFunction(callback))
-			this.connectionHandler = callback;
-	}
-
-	on_disconnect(callback) {
-		if(_.isFunction(callback))
-			this.diconnectHandler = callback;
-	}
-
+  on_message(handler) {
+    if (handler instanceof Function) {
+      this.messageHandler = handler;
+    }
+  }
 }
 
 module.exports = WebsocketConnector;

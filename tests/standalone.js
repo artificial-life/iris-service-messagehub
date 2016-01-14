@@ -45,10 +45,10 @@ let cfg = {
   "connectors": {
     "http": {
       "9000": {
-        // "SocketAPI": {
-        // 	"model": "ws-rest",
-        // 	"options": {}
-        // },
+        "SocketAPI": {
+          "model": "websocket",
+          "options": {}
+        },
         "RESTAPI": {
           "model": "http-rest",
           "options": {}

@@ -17,12 +17,13 @@ class HttpRest extends AbstractConnector {
     super();
   }
 
-  create(options) {
+  create(app, options) {
     router.use(bodyParse.json());
     router.use(bodyParse.urlencoded({
       extended: true
     }));
     router.use(allowCrossDomain);
+
     router.route("/login")
       .post(function(req, res, next) {
         let user = req.body.user;
@@ -46,7 +47,13 @@ class HttpRest extends AbstractConnector {
             next();
           });
       });
-    return router;
+
+    app.use(router);
+  }
+  on_message(handler) {
+    if (handler instanceof Function) {
+      this.messageHandler = handler;
+    }
   }
 }
 
