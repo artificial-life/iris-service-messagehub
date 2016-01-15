@@ -94,7 +94,7 @@ class WebsocketConnector extends AbstractConnector {
 			data.room = this.getRoom(module, event);
 
 			this.io
-				.to(room)
+				.to(data.room)
 				.emit('event', data);
 		});
 
