@@ -75,7 +75,10 @@ class WebsocketConnector extends AbstractConnector {
 
 			let room = this.getRoom(module, event);
 			let result = {
-				room: room,
+				state: false,
+				value: {
+					room: room
+				},
 				request_id: request_id
 			};
 
