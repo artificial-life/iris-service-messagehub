@@ -18,6 +18,7 @@ class WebsocketConnector extends AbstractConnector {
 	}
 	create(app, options) {
 		this.router = crossroads.create();
+		this.router.ignoreState = true;
 
 		this.router.addRoute('/auth', (socket, data) => {
 			auth.check(data).then((result) => {
@@ -74,12 +75,10 @@ class WebsocketConnector extends AbstractConnector {
 
 			let room = this.getRoom(module, event);
 			let result = {
-				state: true,
-				value: {
-					room: room
-				},
+				room: room,
 				request_id: request_id
 			};
+
 			socket.join(room);
 			socket.emit('message', result);
 		});
@@ -96,7 +95,7 @@ class WebsocketConnector extends AbstractConnector {
 			data.room = this.getRoom(module, event);
 
 			this.io
-				.to(data.room)
+				.to(room)
 				.emit('event', data);
 		});
 
