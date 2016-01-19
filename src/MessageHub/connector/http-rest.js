@@ -29,12 +29,13 @@ class HttpRest extends AbstractConnector {
 				let user = req.body.user;
 				let pass = req.body.password;
 				let origin = req.body.origin || "unknown";
+				let expiry = req.body.expiry || false;
 
 				auth.authorize({
 						user: user,
 						password_hash: pass,
 						origin: origin,
-						expiry: false
+						expiry: expiry
 					})
 					.then((success_result) => {
 						res.send(success_result);
