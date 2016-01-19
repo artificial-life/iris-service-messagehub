@@ -4,7 +4,7 @@
 	"description": "couchbase replication controller service",
 	"main": "index.js",
 	"scripts": {
-		"test": "mocha",
+		"test": "mocha ./build/**/*.test.js -r ./build/index.js",
 		"install": "gulp --gulpfile build.js"
 	},
 	"repository": {
@@ -16,6 +16,10 @@
 		"couchbase",
 		"xdcr"
 	],
+	"babel": {
+		"presets": ["node5"],
+		"babelrc": false
+	},
 	"author": "...",
 	"license": "ISC",
 	"bugs": {
@@ -23,6 +27,7 @@
 	},
 	"homepage": "https://github.com/sdk-group/iris-service-messagehub#readme",
 	"devDependencies": {
+		"babel-preset-node5": "^10.3.0",
 		"Couchbird": "git+https://github.com/YuuKohaku/Couchbird.git",
 		"cbird-rdf": "git+https://github.com/YuuKohaku/cbird-rdf.git",
 		"chai": "^3.3.0",
