@@ -25,4 +25,4 @@ class AbstractConnector {
 
 }
 
-export default AbstractConnector;
+module.exports = AbstractConnector;
