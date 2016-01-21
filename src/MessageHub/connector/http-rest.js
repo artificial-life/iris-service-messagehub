@@ -50,6 +50,11 @@ class HttpRest extends AbstractConnector {
 					});
 			});
 
+		router.route("/logout")
+			.post(function(req, res, next) {
+				next();
+			});
+
 		app.use(router);
 	}
 	on_message(handler) {
