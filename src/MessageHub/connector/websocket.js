@@ -24,6 +24,7 @@ class WebsocketConnector extends AbstractConnector {
 			auth.check(data).then((result) => {
 					socket.token = data.token;
 					socket.user_id = result.data.user_id;
+					socket.user_type = result.data.user_type;
 					return result;
 				})
 				.catch((err) => ({
@@ -51,6 +52,7 @@ class WebsocketConnector extends AbstractConnector {
 
 			data._action = action;
 			data.user_id = socket.user_id;
+			data.user_type = socket.user_type;
 
 			this.messageHandler(module, data)
 				.then((result) => {
