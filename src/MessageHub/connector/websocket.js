@@ -58,6 +58,13 @@ class WebsocketConnector extends AbstractConnector {
 				.then((result) => {
 					result.request_id = request_id;
 					socket.emit('message', result);
+				})
+				.catch((err) => {
+					socket.emit('message', {
+						request_id,
+						state: false,
+							reason: 'Internal error.'
+					});
 				});
 		});
 
