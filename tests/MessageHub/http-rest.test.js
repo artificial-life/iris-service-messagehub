@@ -20,7 +20,7 @@ describe.only('HTTP REST LOGIN', function() {
 		},
 		"connectors": {
 			"http": {
-				"9000": {
+				"10000": {
 					// "SocketAPI": {
 					// 	"model": "ws-rest",
 					// 	"options": {}
@@ -40,7 +40,7 @@ describe.only('HTTP REST LOGIN', function() {
 	describe("login", () => {
 		it("should login", (done) => {
 			request
-				.post('http://127.0.0.1:9000/login', {
+				.post('http://127.0.0.1:10000/login', {
 					form: {
 						user: "vasyoQ",
 						password: "123456"
