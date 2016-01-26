@@ -49,12 +49,16 @@ class WebsocketConnector extends AbstractConnector {
 				socket.emit('message', denied);
 				return;
 			}
+			let params = _.defaults({
+				_action: action,
+				user_id: socket.user_id,
+				user_type: socket.user_type
+			}, data.data);
 
 			data._action = action;
 			data.user_id = socket.user_id;
 			data.user_type = socket.user_type;
-
-			this.messageHandler(module, data)
+			this.messageHandler(module, params)
 				.then((result) => {
 					result.request_id = request_id;
 					socket.emit('message', result);
