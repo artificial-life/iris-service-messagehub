@@ -1,6 +1,7 @@
 'use strict'
 
 let crossroads = require('crossroads');
+let EventEmitter2 = require('eventemitter2').EventEmitter2;
 
 let Server = require("socket.io");
 let AbstractConnector = require("./abstract");
@@ -13,141 +14,155 @@ let queue = require('global-queue');
 const DEFAULT_WS_TIMEOUT = 5000;
 
 class WebsocketConnector extends AbstractConnector {
-	constructor() {
-		super();
-	}
-	create(app, options) {
-		this.router = crossroads.create();
-		this.router.ignoreState = true;
+  constructor() {
+    super();
+  }
+  create(app, options) {
+    this.events_router = new EventEmitter2({
+      wildcard: true,
+      delimiter: '.',
+      newListener: false,
+      //unlimited
+      maxListeners: 0
+    });
 
-		this.router.addRoute('/auth', (socket, data) => {
-			auth.check(data).then((result) => {
-					socket.token = data.token;
-					socket.user_id = result.data.user_id;
-					socket.user_type = result.data.user_type;
-					return result;
-				})
-				.catch((err) => ({
-					value: false,
-					reason: "Internal error."
-				}))
-				.then(result => {
-					return result.value ? socket.authorized.resolve(result) : socket.authorized.reject(result.reason);
-				});
-		});
+    this.router = crossroads.create();
+    this.router.ignoreState = true;
 
-		this.router.addRoute('/{module}/{action}', (socket, data, module, action) => {
-			let request_id = data.request_id;
+    this.router.addRoute('/auth', (socket, data) => {
+      auth.check(data).then((result) => {
+          socket.token = data.token;
+          socket.user_id = result.data.user_id;
+          socket.user_type = result.data.user_type;
+          return result;
+        })
+        .catch((err) => ({
+          value: false,
+          reason: "Internal error."
+        }))
+        .then(result => {
+          return result.value ? socket.authorized.resolve(result) : socket.authorized.reject(result.reason);
+        });
+    });
 
-			if(!socket.authorized.promise.isFulfilled()) {
-				let denied = {
-					state: false,
-					reason: 'Auth required',
-					request_id: request_id
-				};
+    this.router.addRoute('/{module}/{action}', (socket, data, module, action) => {
+      let request_id = data.request_id;
 
-				socket.emit('message', denied);
-				return;
-			}
-			let params = _.defaults({
-				_action: action,
-				user_id: socket.user_id,
-				user_type: socket.user_type
-			}, data.data);
+      if (!socket.authorized.promise.isFulfilled()) {
+        let denied = {
+          state: false,
+          reason: 'Auth required',
+          request_id: request_id
+        };
 
-			data._action = action;
-			data.user_id = socket.user_id;
-			data.user_type = socket.user_type;
-			this.messageHandler(module, params)
-				.then((result) => {
-					result.request_id = request_id;
-					socket.emit('message', result);
-				})
-				.catch((err) => {
-					socket.emit('message', {
-						request_id,
-						state: false,
-							reason: 'Internal error.'
-					});
-				});
-		});
+        socket.emit('message', denied);
+        return;
+      }
+      let params = _.defaults({
+        _action: action,
+        user_id: socket.user_id,
+        user_type: socket.user_type
+      }, data.data);
 
-		this.router.addRoute('/subscribe/{module}/{event}', (socket, data, module, event) => {
-			let request_id = data.request_id;
+      data._action = action;
+      data.user_id = socket.user_id;
+      data.user_type = socket.user_type;
+      this.messageHandler(module, params)
+        .then((result) => {
+          result.request_id = request_id;
+          socket.emit('message', result);
+        })
+        .catch((err) => {
+          socket.emit('message', {
+            request_id,
+            state: false,
+              reason: 'Internal error.'
+          });
+        });
+    });
 
-			if(!socket.authorized.promise.isFulfilled()) {
-				let denied = {
-					state: false,
-					reason: 'Auth required',
-					request_id: request_id
-				};
 
-				socket.emit('message', denied);
-				return;
-			}
+    this.router.addRoute('/subscribe', (socket, data) => {
+      let request_id = data.request_id;
 
-			let room = this.getRoom(module, event);
-			let result = {
-				state: true,
-				value: {
-					room: room
-				},
-				request_id: request_id
-			};
+      if (!socket.authorized.promise.isFulfilled()) {
+        let denied = {
+          state: false,
+          reason: 'Auth required',
+          request_id: request_id
+        };
 
-			socket.join(room);
-			socket.emit('message', result);
-		});
-	}
-	getRoom(module, event) {
-		return `${module}.${event}`
-	}
-	listen(server) {
-		this.io = io(server);
+        socket.emit('message', denied);
+        return;
+      }
 
-		queue.on('broadcast', ({
-			data, event, module
-		}) => {
-			data.room = this.getRoom(module, event);
+      let event_name = data.event;
+      if (!event_name) {
+        socket.emit('message', {
+          state: false,
+          reason: 'incorrect event name'
+        });
+        return;
+      }
 
-			this.io
-				.to(data.room)
-				.emit('event', data);
-		});
+      this.events_router.on(event_name, (data) => socket.emit('event', {
+        name: event_name,
+        data: data
+      }));
 
-		this.io.on('connection', (socket) => {
-			console.log('Connected!');
-			let resolve, reject;
-			let authorized = new Promise((res, rej) => {
-				resolve = res;
-				reject = rej;
-			});
+      socket.emit('message', {
+        state: true,
+        value: true,
+        request_id: request_id
+      });
+    });
+  }
+  listen(server) {
+    this.io = io(server);
 
-			socket.authorized = {
-				promise: authorized,
-				resolve: resolve,
-				reject: reject
-			};
+    queue.on('broadcast', ({
+      data, event, module
+    }) => {
+      data.room = this.getRoom(module, event);
 
-			authorized
-				.timeout(DEFAULT_WS_TIMEOUT)
-				.then((result) => {
-					socket.emit('auth-accepted', result)
-				})
-				.catch((result) => socket.disconnect(result))
+      this.io
+        .to(data.room)
+        .emit('event', data);
+    });
 
-			socket.on('message', (data) => {
-				this.router.parse(data.uri, [socket, data]);
-			});
+    this.io.on('connection', (socket) => {
+      console.log('Connected!');
+      let resolve, reject;
+      let authorized = new Promise((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
 
-		});
-	}
+      socket.authorized = {
+        promise: authorized,
+        resolve: resolve,
+        reject: reject
+      };
 
-	on_message(handler) {
-		if(handler instanceof Function) {
-			this.messageHandler = handler;
-		}
-	}
+      authorized
+        .timeout(DEFAULT_WS_TIMEOUT)
+        .then((result) => {
+          socket.emit('auth-accepted', result)
+        })
+        .catch((result) => socket.disconnect(result))
+
+      socket.on('message', (data) => {
+        this.router.parse(data.uri, [socket, data]);
+      });
+
+    });
+  }
+
+  on_message(handler) {
+    if (handler instanceof Function) {
+      this.messageHandler = handler;
+    }
+  }
 }
 
 module.exports = WebsocketConnector;
