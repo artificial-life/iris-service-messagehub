@@ -1,6 +1,7 @@
 'use strict'
 
 let crossroads = require('crossroads');
+let EventEmitter2 = require('eventemitter2').EventEmitter2;
 
 let Server = require("socket.io");
 let AbstractConnector = require("./abstract");
@@ -17,6 +18,14 @@ class WebsocketConnector extends AbstractConnector {
     super();
   }
   create(app, options) {
+    this.events_router = new EventEmitter2({
+      wildcard: true,
+      delimiter: '.',
+      newListener: false,
+      //unlimited
+      maxListeners: 0
+    });
+
     this.router = crossroads.create();
     this.router.ignoreState = true;
 
@@ -72,7 +81,8 @@ class WebsocketConnector extends AbstractConnector {
         });
     });
 
-    this.router.addRoute('/subscribe/{module}/{event}', (socket, data, module, event) => {
+
+    this.router.addRoute('/subscribe', (socket, data) => {
       let request_id = data.request_id;
 
       if (!socket.authorized.promise.isFulfilled()) {
@@ -86,21 +96,26 @@ class WebsocketConnector extends AbstractConnector {
         return;
       }
 
-      let room = this.getRoom(module, event);
-      let result = {
-        state: true,
-        value: {
-          room: room
-        },
-        request_id: request_id
-      };
+      let event_name = data.event;
+      if (!event_name) {
+        socket.emit('message', {
+          state: false,
+          reason: 'incorrect event name'
+        });
+        return;
+      }
 
-      socket.join(room);
-      socket.emit('message', result);
+      this.events_router.on(event_name, (data) => socket.emit('event', {
+        name: event_name,
+        data: data
+      }));
+
+      socket.emit('message', {
+        state: true,
+        value: true,
+        request_id: request_id
+      });
     });
-  }
-  getRoom(module, event) {
-    return `${module}.${event}`
   }
   listen(server) {
     this.io = io(server);
