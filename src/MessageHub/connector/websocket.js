@@ -64,16 +64,13 @@ class WebsocketConnector extends AbstractConnector {
 				user_type: socket.user_type
 			}, data.data);
 
-			data._action = action;
-			data.user_id = socket.user_id;
-			data.user_type = socket.user_type;
 			this.messageHandler(module, params)
 				.then((result) => {
 					result.request_id = request_id;
 					socket.emit('message', result);
 				})
 				.catch((err) => {
-					console.log("ERR!", err.message);
+					console.log("ERR!", err.stack);
 					socket.emit('message', {
 						request_id,
 						state: false,
@@ -85,7 +82,6 @@ class WebsocketConnector extends AbstractConnector {
 
 		this.router.addRoute('/subscribe', (socket, data) => {
 			let request_id = data.request_id;
-
 			if(!socket.authorized.promise.isFulfilled()) {
 				let denied = {
 					state: false,
@@ -97,7 +93,7 @@ class WebsocketConnector extends AbstractConnector {
 				return;
 			}
 
-			let event_name = data.event;
+			let event_name = data.data.event;
 			if(!event_name) {
 				socket.emit('message', {
 					state: false,
@@ -117,6 +113,28 @@ class WebsocketConnector extends AbstractConnector {
 				request_id: request_id
 			});
 		});
+
+		this.router.addRoute('/logout', (socket, data) => {
+			let params = _.defaults({
+				_action: 'leave',
+				user_id: socket.user_id,
+				user_type: socket.user_type
+			}, data.data);
+			console.log("LOGOUT");
+
+			this.messageHandler('agent', params)
+				.then((result) => {
+					socket.emit('message', result);
+				})
+				.catch((err) => {
+					socket.emit('message', {
+						request_id,
+						state: false,
+							reason: 'Internal error.'
+					});
+				});
+		});
+
 	}
 	listen(server) {
 		this.io = io(server);

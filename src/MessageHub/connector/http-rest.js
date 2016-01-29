@@ -30,6 +30,7 @@ class HttpRest extends AbstractConnector {
 				let pass = req.body.password;
 				let origin = req.body.origin || "unknown";
 				let expiry = req.body.expiry || false;
+				console.log("LOGIN");
 
 				auth.authorize({
 						user: user,
@@ -50,10 +51,15 @@ class HttpRest extends AbstractConnector {
 					});
 			});
 
-		router.route("/logout")
-			.post(function(req, res, next) {
-				next();
-			});
+		// router.route("/logout")
+		// 	.post(function(req, res, next) {
+		// 		console.log("LOGOUT");
+		// 		res.send({
+		// 			value: true,
+		// 			reason: "External error."
+		// 		});
+		// 		next();
+		// 	});
 
 		app.use(router);
 	}
