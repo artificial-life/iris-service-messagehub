@@ -74,7 +74,7 @@ class WebsocketConnector extends AbstractConnector {
 					socket.emit('message', {
 						request_id,
 						state: false,
-							reason: 'Internal error.'
+							reason: 'Internal error: ' + err.message
 					});
 				});
 		});

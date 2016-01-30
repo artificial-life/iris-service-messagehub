@@ -14,7 +14,7 @@ let performTask = function(destination, data) {
 		.catch((err) => {
 			return {
 				state: false,
-				reason: "Internal error."
+				reason: "Internal error: " + err.message
 			}
 		});
 };
