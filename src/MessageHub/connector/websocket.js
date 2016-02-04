@@ -74,7 +74,7 @@ class WebsocketConnector extends AbstractConnector {
 					socket.emit('message', {
 						request_id,
 						state: false,
-							reason: 'Internal error: ' + err.message
+						reason: 'Internal error: ' + err.message
 					});
 				});
 		});
@@ -121,16 +121,18 @@ class WebsocketConnector extends AbstractConnector {
 				user_type: socket.user_type
 			}, data.data);
 			console.log("LOGOUT");
+			let request_id = data.request_id;
 
 			this.messageHandler('agent', params)
 				.then((result) => {
+					result.request_id = request_id;
 					socket.emit('message', result);
 				})
 				.catch((err) => {
 					socket.emit('message', {
 						request_id,
 						state: false,
-							reason: 'Internal error.'
+						reason: 'Internal error.'
 					});
 				});
 		});
@@ -140,7 +142,8 @@ class WebsocketConnector extends AbstractConnector {
 		this.io = io(server);
 
 		queue.on('broadcast', ({
-			data, event
+			data,
+			event
 		}) => {
 			console.log("NSG H", data, event);
 			// data.room = this.getRoom(module, event);
