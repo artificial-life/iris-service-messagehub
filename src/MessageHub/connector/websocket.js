@@ -145,13 +145,6 @@ class WebsocketConnector extends AbstractConnector {
 			data,
 			event
 		}) => {
-			console.log("NSG H", data, event);
-			// data.room = this.getRoom(module, event);
-
-			// this.io
-			//   .to(data.room)
-			//   .emit('event', data);
-
 			this.events_router.emit(event, data);
 		});
 
