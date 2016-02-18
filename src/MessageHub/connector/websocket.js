@@ -1,7 +1,8 @@
 'use strict'
 
 let crossroads = require('crossroads');
-let EventEmitter2 = require('eventemitter2').EventEmitter2;
+let EventEmitter2 = require('eventemitter2')
+	.EventEmitter2;
 
 let Server = require("socket.io");
 let AbstractConnector = require("./abstract");
@@ -30,7 +31,8 @@ class WebsocketConnector extends AbstractConnector {
 		this.router.ignoreState = true;
 
 		this.router.addRoute('/auth', (socket, data) => {
-			auth.check(data).then((result) => {
+			auth.check(data)
+				.then((result) => {
 					socket.token = data.token;
 					socket.user_id = result.data.user_id;
 					socket.user_type = result.data.user_type;
@@ -48,7 +50,7 @@ class WebsocketConnector extends AbstractConnector {
 		this.router.addRoute('/{module}/{action}', (socket, data, module, action) => {
 			let request_id = data.request_id;
 
-			if(!socket.authorized.promise.isFulfilled()) {
+			if (!socket.authorized.promise.isFulfilled()) {
 				let denied = {
 					state: false,
 					reason: 'Auth required',
@@ -82,7 +84,7 @@ class WebsocketConnector extends AbstractConnector {
 
 		this.router.addRoute('/subscribe', (socket, data) => {
 			let request_id = data.request_id;
-			if(!socket.authorized.promise.isFulfilled()) {
+			if (!socket.authorized.promise.isFulfilled()) {
 				let denied = {
 					state: false,
 					reason: 'Auth required',
@@ -94,7 +96,7 @@ class WebsocketConnector extends AbstractConnector {
 			}
 
 			let event_name = data.data.event;
-			if(!event_name) {
+			if (!event_name) {
 				socket.emit('message', {
 					state: false,
 					reason: 'incorrect event name'
@@ -141,6 +143,10 @@ class WebsocketConnector extends AbstractConnector {
 	listen(server) {
 		this.io = io(server);
 
+		setInterval(() => {
+			this.events_router.emit('heartbeat', _.now());
+		}, 10000);
+
 		queue.on('broadcast', ({
 			data,
 			event
@@ -177,7 +183,7 @@ class WebsocketConnector extends AbstractConnector {
 	}
 
 	on_message(handler) {
-		if(handler instanceof Function) {
+		if (handler instanceof Function) {
 			this.messageHandler = handler;
 		}
 	}
