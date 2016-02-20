@@ -4,14 +4,16 @@ let ServerHolder = require("./connector/holder");
 let auth = require('iris-auth-util');
 let emitter = require("global-queue");
 
-let performTask = function(destination, data) {
-	return emitter.addTask(destination, data).then((result) => {
+let performTask = function (destination, data) {
+	return emitter.addTask(destination, data)
+		.then((result) => {
 			return {
 				state: true,
 				value: result
 			}
 		})
 		.catch((err) => {
+			console.log("MH ERR!", err.stack);
 			return {
 				state: false,
 				reason: "Internal error: " + err.message
