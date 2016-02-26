@@ -38,12 +38,16 @@ class WebsocketConnector extends AbstractConnector {
 					socket.user_type = result.data.user_type;
 					return result;
 				})
-				.catch((err) => ({
-					value: false,
-					reason: "Internal error."
-				}))
+				.catch((err) => {
+					console.log("WS ERR!", err.stack);
+					return {
+						value: false,
+						reason: "Internal error."
+					};
+				})
 				.then(result => {
-					return result.value ? socket.authorized.resolve(result) : socket.authorized.reject(result.reason);
+					if (!result.value) console.log("WS ERR:", result.reason);
+					return result.value ? socket.authorized.resolve(result) : socket.authorized.reject(new Error(result.reason));
 				});
 		});
 
