@@ -144,7 +144,7 @@ class WebsocketConnector extends AbstractConnector {
 		this.io = io(server);
 
 		setInterval(() => {
-			this.events_router.emit('heartbeat', _.now());
+			this.io.emit('heartbeat', _.now());
 		}, 10000);
 
 		queue.on('broadcast', ({
