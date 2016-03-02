@@ -48,7 +48,6 @@ class WebsocketConnector extends AbstractConnector {
 					};
 				})
 				.then(result => {
-					if (!result.value) console.log("WS ERR:", result.reason);
 					return result.value ? socket.authorized.resolve(result) : socket.authorized.reject(new Error(result.reason));
 				});
 		});
