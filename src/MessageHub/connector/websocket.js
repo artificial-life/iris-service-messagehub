@@ -127,7 +127,7 @@ class WebsocketConnector extends AbstractConnector {
 				user_id: socket.user_id,
 				user_type: socket.user_type
 			}, data.data);
-			console.log("LOGOUT");
+			console.log("LOGOUT", socket.user_id);
 			let request_id = data.request_id;
 
 			this.messageHandler('agent', params)
