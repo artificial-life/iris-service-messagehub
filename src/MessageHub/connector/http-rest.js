@@ -1,11 +1,12 @@
 'use strict'
 
 let AbstractConnector = require("./abstract");
-let router = require("express").Router();
+let router = require("express")
+	.Router();
 let bodyParse = require("body-parser");
 let auth = require('iris-auth-util');
 
-var allowCrossDomain = function(req, res, next) {
+var allowCrossDomain = function (req, res, next) {
 	res.header('Access-Control-Allow-Origin', '*');
 	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
 	res.header('Access-Control-Allow-Headers', 'Content-Type');
@@ -25,7 +26,7 @@ class HttpRest extends AbstractConnector {
 		router.use(allowCrossDomain);
 
 		router.route("/login")
-			.post(function(req, res, next) {
+			.post(function (req, res, next) {
 				let user = req.body.user;
 				let pass = req.body.password;
 				let origin = req.body.origin || "unknown";
@@ -51,6 +52,13 @@ class HttpRest extends AbstractConnector {
 					});
 			});
 
+		router.route("/connection/test")
+			.post(function (req, res, next) {
+				res.send({
+					success: true
+				});
+				next();
+			});
 		// router.route("/logout")
 		// 	.post(function(req, res, next) {
 		// 		console.log("LOGOUT");
@@ -64,7 +72,7 @@ class HttpRest extends AbstractConnector {
 		app.use(router);
 	}
 	on_message(handler) {
-		if(handler instanceof Function) {
+		if (handler instanceof Function) {
 			this.messageHandler = handler;
 		}
 	}

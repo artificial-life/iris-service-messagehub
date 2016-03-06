@@ -38,6 +38,11 @@ class WebsocketConnector extends AbstractConnector {
 					socket.token = data.token;
 					socket.user_id = result.data.user_id;
 					socket.user_type = result.data.user_type;
+					socket.subscriptions = [];
+					socket.subscription_notifier = (ev_data) => socket.emit('event', {
+						name: ev_data.event_name,
+						data: ev_data.data
+					});
 					return result;
 				})
 				.catch((err) => {
@@ -109,10 +114,38 @@ class WebsocketConnector extends AbstractConnector {
 				return;
 			}
 
-			this.events_router.on(event_name, (data) => socket.emit('event', {
-				name: event_name,
-				data: data
-			}));
+			this.events_router.on(event_name, socket.subscription_notifier);
+			socket.subscriptions.push(event_name);
+
+			socket.emit('message', {
+				state: true,
+				value: true,
+				request_id: request_id
+			});
+		});
+
+		this.router.addRoute('/unsubscribe', (socket, data) => {
+			let request_id = data.request_id;
+			if (!socket.authorized.promise.isFulfilled()) {
+				let denied = {
+					state: false,
+					reason: 'Auth required',
+					request_id: request_id
+				};
+
+				socket.emit('message', denied);
+				return;
+			}
+
+			let event_name = data.data.event;
+			if (!event_name) {
+				socket.emit('message', {
+					state: false,
+					reason: 'incorrect event name'
+				});
+				return;
+			}
+			this.events_router.off(event_name, socket.subscription_notifier);
 
 			socket.emit('message', {
 				state: true,
@@ -156,7 +189,11 @@ class WebsocketConnector extends AbstractConnector {
 			data,
 			event
 		}) => {
-			this.events_router.emit(event, data);
+			let ev_data = {
+				event_name: event,
+				data
+			};
+			this.events_router.emit(event, ev_data);
 		});
 
 		this.io.on('connection', (socket) => {
@@ -183,7 +220,11 @@ class WebsocketConnector extends AbstractConnector {
 			socket.on('message', (data) => {
 				this.router.parse(data.uri, [socket, data]);
 			});
-
+			socket.on('disconnect', (data) => {
+				_.map(socket.subscriptions, (event_name) => {
+					this.events_router.off(event_name, socket.subscription_notifier);
+				});
+			});
 		});
 	}
 
