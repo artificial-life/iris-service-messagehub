@@ -35,9 +35,9 @@ class WebsocketConnector extends AbstractConnector {
 				.then((result) => {
 					if (!result.value)
 						return Promise.resolve(result);
-					socket.token = data.token;
-					socket.user_id = result.data.user_id;
-					socket.user_type = result.data.user_type;
+					socket.token = result.value.token;
+					socket.user_id = result.value.user_id;
+					socket.user_type = result.value.user_type;
 					socket.subscriptions = [];
 					socket.subscription_notifier = (ev_data) => socket.emit('event', {
 						name: ev_data.event_name,
