@@ -33,16 +33,16 @@ class WebsocketConnector extends AbstractConnector {
 		this.router.addRoute('/auth', (socket, data) => {
 			auth.check(data)
 				.then((result) => {
-					if (!result.value)
-						return Promise.resolve(result);
+					if (!result.value) return Promise.resolve(result);
+
 					socket.token = result.value.token;
 					socket.user_id = result.value.user_id;
 					socket.user_type = result.value.user_type;
 					socket.subscriptions = [];
-					socket.subscription_notifier = (ev_data) => socket.emit('event', {
-						name: ev_data.event_name,
+					socket.subscription_notifier = (ev_data) => socket.emit(ev_data.event_name, {
 						data: ev_data.data
 					});
+
 					return result;
 				})
 				.catch((err) => {
