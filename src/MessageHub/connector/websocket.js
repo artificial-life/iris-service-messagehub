@@ -184,9 +184,7 @@ class WebsocketConnector extends AbstractConnector {
 		queue.on('broadcast', ({
 			data,
 			event
-		}) => {
-			_.forEach(this.io.engine.clients, (socket) => socket.router && socket.router.parse(event, data))
-		});
+		}) => _.forEach(this.io.engine.clients, (socket) => socket.router && socket.router.parse(event, data)));
 
 		this.io.on('connection', (socket) => {
 			console.log('Connected!');
