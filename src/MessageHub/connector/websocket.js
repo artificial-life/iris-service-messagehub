@@ -7,11 +7,12 @@ let EventEmitter2 = require('eventemitter2')
 let Server = require("socket.io");
 let AbstractConnector = require("./abstract");
 let auth = require('iris-auth-util');
-let io = require('socket.io');
+
+
+let Router = require('tiny-router');
 
 //@FIXIT : move to MessageHub
 let queue = require('global-queue');
-
 const DEFAULT_WS_TIMEOUT = 5000;
 
 class WebsocketConnector extends AbstractConnector {
@@ -19,13 +20,6 @@ class WebsocketConnector extends AbstractConnector {
 		super();
 	}
 	create(app, options) {
-		this.events_router = new EventEmitter2({
-			wildcard: true,
-			delimiter: '.',
-			newListener: false,
-			//unlimited
-			maxListeners: 0
-		});
 
 		this.router = crossroads.create();
 		this.router.ignoreState = true;
@@ -38,10 +32,11 @@ class WebsocketConnector extends AbstractConnector {
 					socket.token = result.value.token;
 					socket.user_id = result.value.user_id;
 					socket.user_type = result.value.user_type;
-					socket.subscriptions = [];
-					socket.subscription_notifier = (ev_data) => socket.emit(ev_data.event_name, {
-						data: ev_data.data
-					});
+
+					socket.router = new Router();
+					socket.router.setDefaultCallback((event, data) => socket.emit(event, {
+						data
+					}));
 
 					return result;
 				})
@@ -114,7 +109,7 @@ class WebsocketConnector extends AbstractConnector {
 				return;
 			}
 
-			this.events_router.on(event_name, socket.subscription_notifier);
+			socket.router.addRoute(event_name);
 			socket.subscriptions.push(event_name);
 
 			socket.emit('message', {
@@ -145,7 +140,8 @@ class WebsocketConnector extends AbstractConnector {
 				});
 				return;
 			}
-			this.events_router.off(event_name, socket.subscription_notifier);
+
+			socket.router.removeRoute(event_name);
 
 			socket.emit('message', {
 				state: true,
@@ -198,6 +194,7 @@ class WebsocketConnector extends AbstractConnector {
 
 		this.io.on('connection', (socket) => {
 			console.log('Connected!');
+
 			let resolve, reject;
 			let authorized = new Promise((res, rej) => {
 				resolve = res;
@@ -221,9 +218,7 @@ class WebsocketConnector extends AbstractConnector {
 				this.router.parse(data.uri, [socket, data]);
 			});
 			socket.on('disconnect', (data) => {
-				_.map(socket.subscriptions, (event_name) => {
-					this.events_router.off(event_name, socket.subscription_notifier);
-				});
+				socket.router.removeAll();
 			});
 		});
 	}

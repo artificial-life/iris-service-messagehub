@@ -65,6 +65,7 @@
     "lodash": "^4.6.1",
     "router": "^1.1.4",
     "socket.io": "^1.4.5",
+    "tiny-router": "git+https://github.com/artificial-life/tiny-router.git",
     "xmlrpc": "github:olegabr/node-xmlrpc"
   }
 }
