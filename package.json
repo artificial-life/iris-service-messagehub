@@ -64,7 +64,7 @@
     "finalhandler": "^0.4.1",
     "global-queue": "git+https://github.com/artificial-life/global-queue.git",
     "iris-auth-util": "git+https://github.com/sdk-group/iris-auth-util.git",
-    "lodash": "^4.6.1",
+    "lodash": "^4.8.2",
     "router": "^1.1.4",
     "socket.io": "^1.4.5",
     "xmlrpc": "github:olegabr/node-xmlrpc"
