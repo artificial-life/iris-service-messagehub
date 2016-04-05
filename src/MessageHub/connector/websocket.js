@@ -185,11 +185,7 @@ class WebsocketConnector extends AbstractConnector {
 			data,
 			event
 		}) => {
-			let ev_data = {
-				event_name: event,
-				data
-			};
-			this.events_router.emit(event, ev_data);
+			_.forEach(this.io.engine.clients, (socket) => socket.router && socket.router.parse(event, data))
 		});
 
 		this.io.on('connection', (socket) => {
