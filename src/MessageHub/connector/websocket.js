@@ -1,10 +1,8 @@
 'use strict'
 
 let crossroads = require('crossroads');
-let EventEmitter2 = require('eventemitter2')
-	.EventEmitter2;
 
-let Server = require("socket.io");
+let io = require("socket.io");
 let AbstractConnector = require("./abstract");
 let auth = require('iris-auth-util');
 
@@ -110,7 +108,6 @@ class WebsocketConnector extends AbstractConnector {
 			}
 
 			socket.router.addRoute(event_name);
-			socket.subscriptions.push(event_name);
 
 			socket.emit('message', {
 				state: true,
@@ -184,7 +181,9 @@ class WebsocketConnector extends AbstractConnector {
 		queue.on('broadcast', ({
 			data,
 			event
-		}) => _.forEach(this.io.engine.clients, (socket) => socket.router && socket.router.parse(event, data)));
+		}) => {
+			_.forEach(this.io.sockets.connected, (socket) => socket.router && socket.router.parse(event, data));
+		});
 
 		this.io.on('connection', (socket) => {
 			console.log('Connected!');

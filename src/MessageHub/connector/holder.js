@@ -3,11 +3,11 @@
 let AbstractConnector = require("./abstract");
 let express = require("express");
 
-let getModel = function(name) {
-	if(_.isString(name)) {
+let getModel = function (name) {
+	if (_.isString(name)) {
 		try {
-			return require(`./${name}`);
-		} catch(e) {
+			return require(`./${name}.js`);
+		} catch (e) {
 			return undefined;
 		}
 	}
@@ -41,10 +41,12 @@ class ServerHolder {
 		connector: conn_data
 	}) {
 		let app = this.handlers[server_key + ":" + server_port];
-		if(!app) {
+		if (!app) {
 			app = express();
 		}
+
 		_.map(conn_data, (connector, conn_name) => {
+
 			let ConnModel = getModel(connector.model);
 			let conn = new ConnModel();
 			conn.name = conn_name;
@@ -68,7 +70,7 @@ class ServerHolder {
 			this.servers[key] = this.handlers[key].listen(port);
 
 			_.map(this.connectors[key], (conn) => {
-				if(conn.listen) conn.listen(this.servers[key])
+				if (conn.listen) conn.listen(this.servers[key])
 			})
 		});
 	}
