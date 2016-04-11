@@ -14,10 +14,10 @@ let performTask = function (destination, data) {
 		})
 		.catch((err) => {
 			console.log("MH ERR!", err.stack);
-			return Promise.reject({
+			return {
 				state: false,
 				reason: "Internal error: " + err.message
-			});
+			}
 		});
 };
 
