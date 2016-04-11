@@ -181,9 +181,7 @@ class WebsocketConnector extends AbstractConnector {
 		queue.on('broadcast', ({
 			data,
 			event
-		}) => {
-			_.forEach(this.io.sockets.connected, (socket) => socket.router && socket.router.parse(event, data));
-		});
+		}) => _.forEach(this.io.sockets.connected, (socket) => socket.router && socket.router.parse(event, data)));
 
 		this.io.on('connection', (socket) => {
 			console.log('Connected!');
@@ -210,9 +208,7 @@ class WebsocketConnector extends AbstractConnector {
 			socket.on('message', (data) => {
 				this.router.parse(data.uri, [socket, data]);
 			});
-			socket.on('disconnect', (data) => {
-				socket.router.removeAll();
-			});
+			socket.on('disconnect', (data) => socket.router && socket.router.removeAll());
 		});
 	}
 
