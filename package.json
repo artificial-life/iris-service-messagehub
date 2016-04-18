@@ -52,7 +52,7 @@
     "gulp-sourcemaps": "^1.6.0",
     "gulp-uglify": "^1.5.3",
     "gulp-watch": "^4.3.5",
-    "request": "^2.71.0"
+    "request": "^2.72.0"
   },
   "dependencies": {
     "bluebird": "^3.3.5",
@@ -64,7 +64,7 @@
     "finalhandler": "^0.4.1",
     "global-queue": "git+https://github.com/artificial-life/global-queue.git",
     "iris-auth-util": "git+https://github.com/sdk-group/iris-auth-util.git",
-    "lodash": "^4.10.0",
+    "lodash": "^4.11.1",
     "router": "^1.1.4",
     "socket.io": "^1.4.5",
     "tiny-router": "git+https://github.com/artificial-life/tiny-router.git",
