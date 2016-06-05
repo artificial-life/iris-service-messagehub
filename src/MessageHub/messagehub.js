@@ -14,6 +14,8 @@ let performTask = function (destination, data) {
 		})
 		.catch((err) => {
 			console.log("MH ERR!", err.stack);
+			global.logger && logger.error(err, 'Error transformed to state:false in MessageHub');
+
 			return {
 				state: false,
 				reason: "Internal error: " + err.message
