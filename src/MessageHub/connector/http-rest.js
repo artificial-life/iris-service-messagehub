@@ -59,6 +59,16 @@ class HttpRest extends AbstractConnector {
 				});
 				next();
 			});
+
+		router.route("/cache/flush")
+			.get(function (req, res, next) {
+				if (req.query.local)
+					global.message_bus && message_bus.emit('inmemory.cache', req.query);
+				res.send({
+					success: true
+				});
+				next();
+			});
 		// router.route("/logout")
 		// 	.post(function(req, res, next) {
 		// 		console.log("LOGOUT");
