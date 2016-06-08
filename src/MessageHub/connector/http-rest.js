@@ -52,6 +52,60 @@ class HttpRest extends AbstractConnector {
 					});
 			});
 
+		router.route("/:module/:action")
+			.post(function (req, res, next) {
+				let token = req.body.token;
+
+				auth.check({
+					token: token
+				}).then((d) => {
+					if (d.state) return next();
+
+					res.send({
+						success: false,
+						reason: d.reason
+					});
+				}).catch((d) => {
+					res.send({
+						success: false,
+						reason: 'auth error'
+					});
+				});
+
+			}, function (req, res, next) {
+				console.log('success');
+				let action = req.params.action;
+				let module = req.params.module;
+				let user_id = false;
+				let user_type = false;
+				console.log(action, module);
+				console.log(req.body);
+
+				let params = _.defaults({
+					_action: action,
+					user_id: user_id,
+					user_type: user_type
+				}, req.body);
+
+				this.messageHandler(module, params)
+					.then((result) => {
+						res.send(result);
+					})
+					.catch((err) => {
+						console.log("ERR!", err.stack);
+						global.logger && logger.error(
+							err, {
+								module: module,
+								acion: action
+							}, 'Unhandled error caught in MessageHub');
+
+						res.send({
+							state: false,
+							reason: 'Internal error: ' + err.message
+						});
+					});
+			});
+
 		router.route("/connection/test")
 			.post(function (req, res, next) {
 				res.send({
