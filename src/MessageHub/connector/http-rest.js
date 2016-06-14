@@ -31,7 +31,6 @@ class HttpRest extends AbstractConnector {
 				let pass = req.body.password;
 				let origin = req.body.origin || "unknown";
 				let expiry = req.body.expiry || false;
-				console.log("LOGIN");
 
 				auth.authorize({
 						user: user,
@@ -49,6 +48,57 @@ class HttpRest extends AbstractConnector {
 							reason: "Internal error."
 						});
 						next();
+					});
+			});
+
+		router.route("/:module/:action")
+			.post((req, res, next) => {
+				let token = req.body.token;
+				auth.check({
+					token: token
+				}).then((d) => {
+					if (d.state) {
+						req.user_id = d.value.user_id;
+						req.user_type = d.value.user_type;
+						return next();
+					}
+
+					res.send({
+						success: false,
+						reason: d.reason
+					});
+				}).catch((d) => {
+					res.send({
+						success: false,
+						reason: 'auth error'
+					});
+				});
+
+			}, (req, res, next) => {
+				let action = req.params.action;
+				let module = req.params.module;
+
+				let params = _.defaults({
+					_action: action,
+					user_id: req.user_id,
+					user_type: req.user_type
+				}, req.body);
+
+				this.messageHandler(module, params)
+					.then((result) => {
+						res.send(result);
+					})
+					.catch((err) => {
+						global.logger && logger.error(
+							err, {
+								module: module,
+								acion: action
+							}, 'Unhandled error caught in MessageHub');
+
+						res.send({
+							state: false,
+							reason: 'Internal error: ' + err.message
+						});
 					});
 			});
 
