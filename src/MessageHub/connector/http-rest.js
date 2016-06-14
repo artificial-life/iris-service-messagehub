@@ -31,7 +31,6 @@ class HttpRest extends AbstractConnector {
 				let pass = req.body.password;
 				let origin = req.body.origin || "unknown";
 				let expiry = req.body.expiry || false;
-				console.log("LOGIN");
 
 				auth.authorize({
 						user: user,
@@ -53,13 +52,16 @@ class HttpRest extends AbstractConnector {
 			});
 
 		router.route("/:module/:action")
-			.post(function (req, res, next) {
+			.post((req, res, next) => {
 				let token = req.body.token;
-
 				auth.check({
 					token: token
 				}).then((d) => {
-					if (d.state) return next();
+					if (d.state) {
+						req.user_id = d.value.user_id;
+						req.user_type = d.value.user_type;
+						return next();
+					}
 
 					res.send({
 						success: false,
@@ -72,19 +74,14 @@ class HttpRest extends AbstractConnector {
 					});
 				});
 
-			}, function (req, res, next) {
-				console.log('success');
+			}, (req, res, next) => {
 				let action = req.params.action;
 				let module = req.params.module;
-				let user_id = false;
-				let user_type = false;
-				console.log(action, module);
-				console.log(req.body);
 
 				let params = _.defaults({
 					_action: action,
-					user_id: user_id,
-					user_type: user_type
+					user_id: req.user_id,
+					user_type: req.user_type
 				}, req.body);
 
 				this.messageHandler(module, params)
@@ -92,7 +89,6 @@ class HttpRest extends AbstractConnector {
 						res.send(result);
 					})
 					.catch((err) => {
-						console.log("ERR!", err.stack);
 						global.logger && logger.error(
 							err, {
 								module: module,
